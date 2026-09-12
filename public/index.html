@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kanojo AI - Anime Romcom Chat</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="chat-container">
+    <!-- Header -->
+    <header class="chat-header">
+      <div class="header-left">
+        <div class="avatar-container">
+          <div class="avatar-img">🌸</div>
+          <span class="online-dot"></span>
+        </div>
+        <div class="char-info">
+          <h1 class="char-name">Airi-chan <span class="badge">Heroine 💕</span></h1>
+          <p class="char-status"><span class="pulse"></span> Online & Siap Manja~ ✨</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="reset-btn" title="Hapus Riwayat Chat" class="icon-btn">🗑️</button>
+      </div>
+    </header>
+
+    <!-- Chat Messages Area -->
+    <main class="chat-messages" id="chat-messages">
+      <!-- Welcome card -->
+      <div class="welcome-card">
+        <div class="welcome-icon">💖✨</div>
+        <h3>Konichiwa~! 👋</h3>
+        <p>Airi di sini! Kamu siap menemani Airi hari ini kan? Jangan cuekin Airi lho ya! (⁠>⁠<⁠)♡</p>
+      </div>
+    </main>
+
+    <!-- Quick Action Chips -->
+    <div class="quick-chips">
+      <button class="chip" data-text="Konnichiwa Airi-chan! Lagi ngapain nih? ✨">Konnichiwa! 👋</button>
+      <button class="chip" data-text="Kamu kok imut banget sih hari ini? 🥰">Puji Airi 🥰</button>
+      <button class="chip" data-text="Hehe... Airi, kamu lagi cemburu ya? 😜">Usilin Airi 😜</button>
+      <button class="chip" data-text="Boleh minta dimanja nggak hari ini? 🥺👉👈">Minta dimanja 🥺</button>
+    </div>
+
+    <!-- Input Box -->
+    <footer class="chat-input-area">
+      <form id="chat-form" class="input-form">
+        <textarea
+          id="user-input"
+          placeholder="Ketik pesan untuk Airi-chan..."
+          rows="1"
+          required
+        ></textarea>
+        <button type="submit" id="send-btn" title="Kirim Pesan">
+          <span>🚀</span>
+        </button>
+      </form>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
