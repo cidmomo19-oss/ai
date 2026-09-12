@@ -1,77 +1,50 @@
-# 🌸 Kanojo AI - Anime Romcom Roleplay Chat (Cloudflare Workers AI)
+# 🌸 Kanojo AI - Offline Anime Romcom Roleplay Chat (WebLLM / In-Browser AI)
 
 Aplikasi AI Chat Roleplay dengan karakter heroine anime romcom Jepang yang imut, centil, dan suka menjahili secara menggemaskan.
 
-✨ **Keunggulan Utama:**
-- 💯 **100% GRATIS & Beneran AI**: Menggunakan **Cloudflare Workers AI** bawaan. Tidak perlu daftar API Key ke OpenAI, Gemini, Groq, atau API pihak ketiga manapun!
-- 📱 **Mobile First**: Tampilan khusus HP yang nyaman, cantik, dan responsif.
-- 💬 **Fitur Lengkap**: Memori riwayat percakapan otomatis di HP, tombol saran pesan cepat (*quick chips*), indikator ketik, dan tombol reset.
-- 📲 **Deploy Lewat HP**: Dideploy ke **Cloudflare Pages** langsung dari HP tanpa butuh PC/Laptop!
+✨ **Keunggulan Utama Offline AI:**
+- 📴 **100% OFFLINE & TANPA KUOTA WORKERS**: AI berjalan sepenuhnya langsung di dalam browser HP kamu menggunakan teknologi WebGPU & WebLLM. **Bebas boros kuota Cloudflare / API key selamanya!**
+- ⚡ **Ultra Ringan untuk HP RAM 4GB (Helio G80/G85)**: Menggunakan model terkompresi **Qwen2-0.5B-Instruct-q4f16_1** (~300MB VRAM/RAM) yang sangat ringan dan responsif di smartphone budget.
+- 📱 **Mobile First UI**: Desain antarmuka imut bertema anime romcom khusus HP.
+- 💬 **Fitur Lengkap**: Memori percakapan otomatis di HP, indikator loading model, tombol pesan cepat (*quick chips*), dan hapus riwayat.
 
 ---
 
-## 📱 Cara Deploy ke Cloudflare Pages dari HP (Khusus Orang Awam)
+## 🚀 Cara Menggunakan & Deploy ke Cloudflare Pages dari HP
 
-Kamu bisa melakukan seluruh proses ini hanya dalam kurun waktu **3–5 menit** lewat browser HP (Chrome / Safari / Kiwi).
+Karena AI berjalan 100% di browser HP kamu, kamu hanya perlu mendeploy file web statis ini ke Cloudflare Pages (atau platform hosting statis apapun):
 
-### 📍 Langkah 1: Buat Akun GitHub & Cloudflare (Jika Belum Punya)
-1. Buka [github.com](https://github.com) dan buat akun (Gratis).
-2. Buka [cloudflare.com](https://dash.cloudflare.com/sign-up) dan buat akun (Gratis).
+### 📍 Langkah 1: Deploy ke Cloudflare Pages lewat Browser HP
+1. Buka [github.com](https://github.com) dan pastikan repo ini ada di akun GitHub milikmu.
+2. Buka Dashboard Cloudflare: **[dash.cloudflare.com](https://dash.cloudflare.com)**.
+3. Klik **Workers & Pages** -> **Create Application** -> pilih tab **Pages** -> klik **Connect to Git**.
+4. Pilih repository `kanojo-ai-chat`.
+5. Pengaturan Build:
+   - **Framework preset**: None
+   - **Build command**: *Biarkan kosong*
+   - **Build output directory**: Ketik `public`
+6. Klik **Save and Deploy**.
 
----
-
-### 📍 Langkah 2: Fork / Upload Repository ke GitHub
-1. Pastikan seluruh kode repositori ini sudah ada di akun GitHub milikmu.
-2. Jika kamu mendapatkan project ini, simpan/push ke repository GitHub kamu sendiri.
-
----
-
-### 📍 Langkah 3: Deploy ke Cloudflare Pages
-1. Buka Dashboard Cloudflare: **[dash.cloudflare.com](https://dash.cloudflare.com)** di HP.
-2. Klik menu **Workers & Pages** di bilah navigasi kiri.
-3. Klik tombol **Create Application** (Buat Aplikasi).
-4. Pilih tab **Pages**, lalu klik **Connect to Git** (Hubungkan ke Git).
-5. Sambungkan ke akun GitHub kamu, lalu pilih repository project ini (`kanojo-ai-chat`).
-6. Klik **Begin setup** (Mulai penyiapan).
-
-#### ⚙️ Pengaturan Build:
-- **Project name**: `kanojo-ai-chat` (bebas)
-- **Framework preset**: Pilih **None**
-- **Build command**: *Biarkan kosong*
-- **Build output directory**: Ketik `public`
-7. Klik **Save and Deploy**. Tunggu sekitar 1 menit sampai proses deploy selesai.
+> 💡 **Keterangan**: Kamu TIDAK perlu mengatur AI Binding di Cloudflare lagi karena AI-nya sudah berjalan offline di dalam browser HP kamu!
 
 ---
 
-### 📍 Langkah 4: Aktifkan Workers AI Binding (PENTING! ⚠️)
-Agar AI-nya aktif dan bisa merespon pesanmu tanpa API key pihak ketiga, kamu wajib mengaktifkan modul AI di Cloudflare:
-
-1. Di dashboard Cloudflare Pages project kamu, klik tab **Settings** (Pengaturan).
-2. Gulir ke bawah dan cari menu **Functions**.
-3. Cari bagian **Workers AI Bindings**, lalu klik **Add binding**.
-4. Isi data sebagai berikut:
-   - **Variable name**: `AI` *(Wajib ditulis huruf kapital semua)*
-5. Klik **Save** (Simpan).
-6. **Langkah Terakhir (Redeploy)**:
-   - Masuk ke tab **Deployments**.
-   - Klik titik tiga (**...**) pada deployment terbaru, lalu pilih **Retry deployment** (atau **Create new deployment**).
-   - Tunggu 1 menit hingga selesai.
-
-🎉 **SELESAI!** Sekarang buka link website Cloudflare Pages kamu (misal: `https://kanojo-ai-chat.pages.dev`), dan kamu sudah bisa mengobrol santai & bermanja-manja dengan **Airi-chan** langsung dari HP! 💖✨
+## 📱 Cara Kerja Offline AI di Browser HP:
+1. Saat pertama kali membuka website, browser akan mengunduh bobot model AI (~350MB) 1x saja.
+2. Model AI akan disimpan di *cache/Storage* browser HP.
+3. Setelah 100% selesai dimuat, kamu bisa mematikan internet/mode pesawat, dan **Airi-chan tetap bisa diajak chat secara offline!** 💖
 
 ---
 
 ## 📁 Struktur File Project
 
 ```text
-├── functions/
-│   └── api/
-│       └── chat.js       # Backend Cloudflare Pages Function (Workers AI integration)
 ├── public/
-│   ├── index.html      # Tampilan UI Chat Anime
-│   ├── style.css       # Styling Mobile & Tema Soft Pink
-│   └── app.js          # Logika frontend & riwayat obrolan
-├── wrangler.toml       # Konfigurasi Cloudflare Workers AI
+│   ├── index.html      # Tampilan UI Chat Anime (WebLLM integration)
+│   ├── style.css       # Styling Mobile Tema Soft Pink
+│   ├── app.js          # Logika WebLLM Client Engine & UI
+│   └── worker.js       # Web Worker untuk pemrosesan AI di background
+├── wrangler.toml       # Konfigurasi Cloudflare Pages Output
 └── README.md           # Panduan lengkap pengguna
 ```
 

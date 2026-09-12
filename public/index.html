@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Kanojo AI - Anime Romcom Chat</title>
+  <title>Kanojo AI - Offline Anime Romcom Chat</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,11 +16,11 @@
       <div class="header-left">
         <div class="avatar-container">
           <div class="avatar-img">🌸</div>
-          <span class="online-dot"></span>
+          <span class="online-dot" id="status-dot"></span>
         </div>
         <div class="char-info">
           <h1 class="char-name">Airi-chan <span class="badge">Heroine 💕</span></h1>
-          <p class="char-status"><span class="pulse"></span> Online & Siap Manja~ ✨</p>
+          <p class="char-status" id="char-status-text"><span class="pulse"></span> Menyiapkan AI Offline... 📴</p>
         </div>
       </div>
       <div class="header-actions">
@@ -28,13 +28,27 @@
       </div>
     </header>
 
+    <!-- Model Loading Banner -->
+    <div id="model-loader-banner" class="model-loader-banner">
+      <div class="loader-info">
+        <span class="loader-icon">⚡</span>
+        <div class="loader-text-group">
+          <div class="loader-title" id="loader-title">Mengunduh Model AI Offline (~350MB)...</div>
+          <div class="loader-sub" id="loader-sub">Hanya diunduh 1x saat pertama kali! Disimpan di memori HP.</div>
+        </div>
+      </div>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
+      </div>
+    </div>
+
     <!-- Chat Messages Area -->
     <main class="chat-messages" id="chat-messages">
       <!-- Welcome card -->
       <div class="welcome-card">
         <div class="welcome-icon">💖✨</div>
-        <h3>Konichiwa~! 👋</h3>
-        <p>Airi di sini! Kamu siap menemani Airi hari ini kan? Jangan cuekin Airi lho ya! (⁠>⁠<⁠)♡</p>
+        <h3>Konichiwa~! 👋 (100% Offline AI)</h3>
+        <p>Airi berjalan 100% di browser HP kamu! Tanpa kuota Cloudflare, tanpa API key, dan hemat RAM! (⁠>⁠<⁠)♡</p>
       </div>
     </main>
 
@@ -54,14 +68,15 @@
           placeholder="Ketik pesan untuk Airi-chan..."
           rows="1"
           required
+          disabled
         ></textarea>
-        <button type="submit" id="send-btn" title="Kirim Pesan">
+        <button type="submit" id="send-btn" title="Kirim Pesan" disabled>
           <span>🚀</span>
         </button>
       </form>
     </footer>
   </div>
 
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>

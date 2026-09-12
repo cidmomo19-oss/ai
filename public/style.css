@@ -91,9 +91,13 @@ body {
   right: 2px;
   width: 11px;
   height: 11px;
-  background-color: #48bb78;
+  background-color: #ed8936;
   border: 2px solid #ffffff;
   border-radius: 50%;
+}
+
+.online-dot.ready {
+  background-color: #48bb78;
 }
 
 .char-info {
@@ -134,16 +138,20 @@ body {
 .pulse {
   width: 6px;
   height: 6px;
-  background-color: #38a169;
+  background-color: #ed8936;
   border-radius: 50%;
   display: inline-block;
   animation: pulse-animation 1.5s infinite;
 }
 
+.pulse.ready {
+  background-color: #38a169;
+}
+
 @keyframes pulse-animation {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 161, 105, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(56, 161, 105, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 161, 105, 0); }
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
 }
 
 .icon-btn {
@@ -159,6 +167,58 @@ body {
 .icon-btn:active {
   transform: scale(0.92);
   background: #ffe4e6;
+}
+
+/* Model Loader Banner */
+.model-loader-banner {
+  background: #fff5f8;
+  border-bottom: 1px solid #fbb6ce;
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.loader-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.loader-icon {
+  font-size: 1.3rem;
+}
+
+.loader-text-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.loader-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #d53f8c;
+}
+
+.loader-sub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 6px;
+  background: #fed7e2;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #ff5388, #ff85a1);
+  width: 0%;
+  transition: width 0.2s ease;
 }
 
 /* Chat Messages */
@@ -205,7 +265,7 @@ body {
 .message {
   display: flex;
   flex-direction: column;
-  max-width: 82%;
+  max-width: 85%;
   animation: slideUp 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
