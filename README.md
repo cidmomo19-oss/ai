@@ -8,7 +8,7 @@ Aplikasi AI Chat Roleplay dengan karakter heroine anime romcom Jepang yang imut,
 - 📱 **Mobile First UI**: Desain antarmuka imut bertema anime romcom khusus HP.
 - 💬 **Fitur Lengkap**: Memori percakapan otomatis di HP, indikator loading model, tombol pesan cepat (*quick chips*), dan hapus riwayat.
 
----
+--- 
 
 ## 🚀 Cara Menggunakan & Deploy ke Cloudflare Pages dari HP
 
