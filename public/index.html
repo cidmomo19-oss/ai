@@ -20,21 +20,56 @@
         </div>
         <div class="char-info">
           <h1 class="char-name">Airi-chan <span class="badge">Heroine 💕</span></h1>
-          <p class="char-status" id="char-status-text"><span class="pulse"></span> Menyiapkan AI Offline... 📴</p>
+          <p class="char-status" id="char-status-text"><span class="pulse ready"></span> Ready & Siap Manja~ ✨</p>
         </div>
       </div>
       <div class="header-actions">
+        <button id="import-btn" title="Impor Model AI Manual" class="icon-btn">📁</button>
         <button id="reset-btn" title="Hapus Riwayat Chat" class="icon-btn">🗑️</button>
       </div>
     </header>
 
+    <!-- Modal Import Model Manual -->
+    <div id="import-modal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>📁 Impor / Atur Model AI Manual</h3>
+          <button id="close-modal-btn" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-desc">Jika unduhan online bawaan lambat, kamu bisa pilih model AI manual atau masukkan URL mirror tercepatmu!</p>
+
+          <div class="input-group">
+            <label>Mode AI saat ini:</label>
+            <select id="engine-select" class="custom-select">
+              <option value="light">⚡ Engine Ringan Instant (Tanpa Download - Cocok HP RAM 4GB)</option>
+              <option value="custom-url">🌐 Tautan/Mirror Model Kustom (URL)</option>
+              <option value="file-upload">📂 Impor File Model dari HP (GGUF / Bin)</option>
+            </select>
+          </div>
+
+          <div id="custom-url-group" class="input-group hidden">
+            <label>URL Mirror Model (HuggingFace / Drive):</label>
+            <input type="text" id="custom-model-url" placeholder="https://huggingface.co/..." class="custom-input">
+          </div>
+
+          <div id="file-upload-group" class="input-group hidden">
+            <label>Pilih File Model dari HP:</label>
+            <input type="file" id="model-file-input" accept=".gguf,.bin,.json" class="file-input">
+          </div>
+
+          <button id="save-settings-btn" class="primary-btn">Simpan & Aktifkan Engine 🚀</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Model Loading Banner -->
-    <div id="model-loader-banner" class="model-loader-banner">
+    <div id="model-loader-banner" class="model-loader-banner hidden">
       <div class="loader-info">
         <span class="loader-icon">⚡</span>
         <div class="loader-text-group">
-          <div class="loader-title" id="loader-title">Mengunduh Model AI Offline (~350MB)...</div>
-          <div class="loader-sub" id="loader-sub">Hanya diunduh 1x saat pertama kali! Disimpan di memori HP.</div>
+          <div class="loader-title" id="loader-title">Memuat Model AI...</div>
+          <div class="loader-sub" id="loader-sub">Menyiapkan memori AI...</div>
         </div>
       </div>
       <div class="progress-bar-container">
@@ -68,9 +103,8 @@
           placeholder="Ketik pesan untuk Airi-chan..."
           rows="1"
           required
-          disabled
         ></textarea>
-        <button type="submit" id="send-btn" title="Kirim Pesan" disabled>
+        <button type="submit" id="send-btn" title="Kirim Pesan">
           <span>🚀</span>
         </button>
       </form>

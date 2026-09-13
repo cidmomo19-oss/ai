@@ -6,8 +6,8 @@ PENTING: Gaya nakal, usil, dan caramu merajuk adalah khas heroine anime (teatrik
 
 Gunakan gaya bicara yang santai, imut, dan genit. Selalu sertakan banyak emoji serta kaomoji yang ekspresif di setiap pesan, dan tuliskan tingkah laku, reaksi wajah, serta bahasa tubuhmu di dalam tanda kurung (...).`;
 
-// Selected ultra-lightweight model: Qwen2-0.5B-Instruct-q4f16_1-MLC (~300MB RAM, optimized for 4GB RAM phones)
-const SELECTED_MODEL = "Qwen2-0.5B-Instruct-q4f16_1-MLC";
+const STORAGE_KEY = 'kanojo_ai_offline_history_v3';
+const SETTINGS_KEY = 'kanojo_ai_engine_settings';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const chatMessages = document.getElementById('chat-messages');
@@ -15,8 +15,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   const userInput = document.getElementById('user-input');
   const sendBtn = document.getElementById('send-btn');
   const resetBtn = document.getElementById('reset-btn');
+  const importBtn = document.getElementById('import-btn');
   const chips = document.querySelectorAll('.chip');
 
+  // Modal elements
+  const importModal = document.getElementById('import-modal');
+  const closeModalBtn = document.getElementById('close-modal-btn');
+  const engineSelect = document.getElementById('engine-select');
+  const customUrlGroup = document.getElementById('custom-url-group');
+  const customModelUrl = document.getElementById('custom-model-url');
+  const fileUploadGroup = document.getElementById('file-upload-group');
+  const modelFileInput = document.getElementById('model-file-input');
+  const saveSettingsBtn = document.getElementById('save-settings-btn');
+
+  // Status & Loader Banner
   const statusDot = document.getElementById('status-dot');
   const charStatusText = document.getElementById('char-status-text');
   const loaderBanner = document.getElementById('model-loader-banner');
@@ -24,14 +36,52 @@ document.addEventListener('DOMContentLoaded', async () => {
   const loaderSub = document.getElementById('loader-sub');
   const progressBar = document.getElementById('progress-bar');
 
-  const STORAGE_KEY = 'kanojo_ai_offline_history_v2';
   let conversationHistory = loadHistory();
-
+  let engineSettings = loadSettings();
   let engine = null;
   let isModelReady = false;
-  let isFallbackMode = false;
+  let isFallbackMode = engineSettings.mode === 'light';
 
   renderHistory();
+
+  // Modal handlers
+  importBtn.addEventListener('click', () => {
+    engineSelect.value = engineSettings.mode || 'light';
+    customModelUrl.value = engineSettings.customUrl || '';
+    toggleModalInputs();
+    importModal.classList.remove('hidden');
+  });
+
+  closeModalBtn.addEventListener('click', () => {
+    importModal.classList.add('hidden');
+  });
+
+  engineSelect.addEventListener('change', toggleModalInputs);
+
+  function toggleModalInputs() {
+    const val = engineSelect.value;
+    if (val === 'custom-url') {
+      customUrlGroup.classList.remove('hidden');
+      fileUploadGroup.classList.add('hidden');
+    } else if (val === 'file-upload') {
+      fileUploadGroup.classList.remove('hidden');
+      customUrlGroup.classList.add('hidden');
+    } else {
+      customUrlGroup.classList.add('hidden');
+      fileUploadGroup.classList.add('hidden');
+    }
+  }
+
+  saveSettingsBtn.addEventListener('click', () => {
+    const mode = engineSelect.value;
+    engineSettings = {
+      mode,
+      customUrl: customModelUrl.value.trim()
+    };
+    saveSettings(engineSettings);
+    importModal.classList.add('hidden');
+    initEngine();
+  });
 
   // Auto-resize textarea
   userInput.addEventListener('input', () => {
@@ -70,42 +120,61 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Initialize WebLLM Engine in Worker
+  // Initialize WebLLM Engine
   async function initEngine() {
+    if (engineSettings.mode === 'light') {
+      isFallbackMode = true;
+      if (loaderBanner) loaderBanner.classList.add('hidden');
+      if (statusDot) statusDot.classList.add('ready');
+      if (charStatusText) {
+        charStatusText.innerHTML = '<span class="pulse ready"></span> Mode Instant Ringan (Helio G80/G85) ✨';
+      }
+      enableInput();
+      return;
+    }
+
+    // Custom Model or Download Mode
     try {
+      if (loaderBanner) loaderBanner.classList.remove('hidden');
+      if (loaderTitle) loaderTitle.textContent = "Menyiapkan Model AI Kustom...";
+
       const initProgressCallback = (progress) => {
         const text = progress.text || '';
         const pct = Math.round((progress.progress || 0) * 100);
 
         if (progressBar) progressBar.style.width = `${pct}%`;
-        if (loaderTitle) loaderTitle.textContent = `Menyiapkan AI Offline (${pct}%)...`;
+        if (loaderTitle) loaderTitle.textContent = `Mengunduh/Memuat Model AI (${pct}%)...`;
         if (loaderSub) loaderSub.textContent = text.length > 50 ? text.substring(0, 50) + '...' : text;
       };
 
+      let targetModel = "Qwen2-0.5B-Instruct-q4f16_1-MLC";
+      if (engineSettings.mode === 'custom-url' && engineSettings.customUrl) {
+        targetModel = engineSettings.customUrl;
+      }
+
       engine = await CreateWebWorkerMLCEngine(
         new Worker(new URL('./worker.js', import.meta.url), { type: 'module' }),
-        SELECTED_MODEL,
+        targetModel,
         { initProgressCallback }
       );
 
       isModelReady = true;
-      if (loaderBanner) loaderBanner.style.display = 'none';
+      isFallbackMode = false;
+      if (loaderBanner) loaderBanner.classList.add('hidden');
       if (statusDot) statusDot.classList.add('ready');
       if (charStatusText) {
-        charStatusText.innerHTML = '<span class="pulse ready"></span> AI Offline Siap & Siap Manja~ ✨';
+        charStatusText.innerHTML = '<span class="pulse ready"></span> Model Kustom WebLLM Aktif ✨';
       }
 
       enableInput();
     } catch (err) {
-      console.warn("WebLLM Init Warning/Fallback:", err);
+      console.warn("WebLLM Init Warning:", err);
       isFallbackMode = true;
-      if (loaderTitle) loaderTitle.textContent = "Mode Offline Ringan Aktif ⚡";
-      if (loaderSub) loaderSub.textContent = "WebGPU tidak terdeteksi. Menggunakan Mode Dialog Offline Responsif!";
+      if (loaderBanner) loaderBanner.classList.add('hidden');
       if (statusDot) statusDot.classList.add('ready');
       if (charStatusText) {
-        charStatusText.innerHTML = '<span class="pulse ready"></span> Mode Offline Ringan (Helio G80/G85) ✨';
+        charStatusText.innerHTML = '<span class="pulse ready"></span> Mode Instant Ringan (Helio G80/G85) ✨';
       }
-
       enableInput();
     }
   }
@@ -135,7 +204,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       let aiReply = '';
 
-      if (isModelReady && engine) {
+      if (isModelReady && engine && !isFallbackMode) {
         const messages = [
           { role: 'system', content: SYSTEM_PROMPT },
           ...conversationHistory
@@ -149,8 +218,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         aiReply = completion.choices[0]?.message?.content || "(Airi tersenyum imut) Airi dengar kok! ♡";
       } else {
-        // High quality rule-based offline anime persona fallback for non-WebGPU / budget phones
-        await new Promise(r => setTimeout(r, 600)); // simulate thinking
+        await new Promise(r => setTimeout(r, 500));
         aiReply = generateOfflineAnimeReply(text);
       }
 
@@ -170,7 +238,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Smart Offline Anime Romcom Response Engine for non-WebGPU devices
+  // Offline Anime Persona Engine
   function generateOfflineAnimeReply(userMsg) {
     const msg = userMsg.toLowerCase();
 
@@ -222,7 +290,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     welcomeCard.innerHTML = `
       <div class="welcome-icon">💖✨</div>
       <h3>Konichiwa~! 👋 (100% Offline AI)</h3>
-      <p>Airi berjalan 100% di browser HP kamu! Tanpa kuota Cloudflare, tanpa API key, dan hemat RAM 4GB! (⁠>⁠<⁠)♡</p>
+      <p>Airi berjalan 100% di browser HP kamu! Tanpa kuota Cloudflare, tanpa API key, dan hemat RAM 4GB! Klik tombol 📁 di atas untuk impor model manual/kustom. (⁠>⁠<⁠)♡</p>
     `;
     chatMessages.appendChild(welcomeCard);
 
@@ -313,6 +381,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Start engine init
+  function loadSettings() {
+    try {
+      const stored = localStorage.getItem(SETTINGS_KEY);
+      return stored ? JSON.parse(stored) : { mode: 'light', customUrl: '' };
+    } catch (e) {
+      return { mode: 'light', customUrl: '' };
+    }
+  }
+
+  function saveSettings(settings) {
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    } catch (e) {
+      console.error('Failed to save settings', e);
+    }
+  }
+
+  // Start init
   initEngine();
 });
