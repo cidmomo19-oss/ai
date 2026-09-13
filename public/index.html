@@ -3,99 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Kanojo AI - Smart Assistant & Persona Chat</title>
+  <title>Airi-chan - Anime Romcom Roleplay AI</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="chat-container">
     <!-- Header -->
     <header class="chat-header">
       <div class="header-left">
-        <div class="avatar-wrapper">
-          <div class="avatar-icon" id="header-avatar">🤖</div>
-          <span class="status-indicator ready" id="status-indicator"></span>
+        <div class="avatar-container">
+          <div class="avatar-img">🌸</div>
+          <span class="online-dot" id="online-dot"></span>
         </div>
-        <div class="header-title-group">
-          <div class="title-row">
-            <h1 class="header-name" id="header-name">AI Assistant</h1>
-            <span class="mode-badge" id="header-badge">Standar</span>
-          </div>
-          <p class="header-subtitle" id="header-subtitle">Siap membantu Anda</p>
+        <div class="char-info">
+          <h1 class="char-name">Airi-chan <span class="badge">Heroine 💕</span></h1>
+          <p class="char-status" id="char-status"><span class="pulse"></span> Online & Siap Manja~ ✨</p>
         </div>
       </div>
-
       <div class="header-actions">
-        <!-- Persona / Mode Switcher Dropdown -->
-        <select id="persona-selector" class="persona-select" title="Pilih Mode Chat">
-          <option value="standard">🤖 Mode AI Standar</option>
-          <option value="airi">🌸 Airi-chan (Anime Roleplay)</option>
-        </select>
-        <button id="reset-btn" title="Hapus Percakapan" class="action-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-        </button>
+        <button id="reset-btn" title="Hapus Riwayat Chat" class="icon-btn">🗑️</button>
       </div>
     </header>
 
-    <!-- Model Download Progress Banner -->
+    <!-- Model Loading Banner (WebLLM Progress) -->
     <div id="loader-banner" class="loader-banner hidden">
-      <div class="loader-header">
+      <div class="loader-info">
         <span class="loader-spinner"></span>
-        <span class="loader-text" id="loader-text">Memulai pengunduhan model AI...</span>
-        <span class="loader-percentage" id="loader-percentage">0%</span>
+        <span class="loader-text" id="loader-text">Menyiapkan memori Airi-chan...</span>
+        <span class="loader-pct" id="loader-pct">0%</span>
       </div>
-      <div class="progress-track">
-        <div class="progress-fill" id="progress-fill"></div>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
       </div>
     </div>
 
-    <!-- Main Chat Area -->
-    <main class="chat-body" id="chat-body">
-      <!-- Welcome Screen -->
-      <div class="welcome-container" id="welcome-container">
-        <div class="welcome-avatar" id="welcome-avatar">✨</div>
-        <h2 class="welcome-title" id="welcome-title">Selamat Datang di Kanojo AI</h2>
-        <p class="welcome-desc" id="welcome-desc">Asisten AI cerdas untuk membantu pekerjaan, menjawab pertanyaan, atau beralih ke persona karakter kesukaan Anda.</p>
-
-        <div class="feature-grid" id="welcome-features">
-          <div class="feature-card" data-prompt="Jelaskan secara singkat bagaimana cara kerja AI secara umum.">
-            <span class="feature-icon">💡</span>
-            <div class="feature-text">
-              <strong>Penjelasan Singkat</strong>
-              <span>Jelaskan konsep dasar AI</span>
-            </div>
-          </div>
-          <div class="feature-card" data-prompt="Buatkan draf email profesional untuk izin tidak masuk kerja.">
-            <span class="feature-icon">📝</span>
-            <div class="feature-text">
-              <strong>Bantuan Penulisan</strong>
-              <span>Draf email atau dokumen</span>
-            </div>
-          </div>
-          <div class="feature-card" data-prompt="Beri saya 3 ide topik diskusi yang menarik.">
-            <span class="feature-icon">🧠</span>
-            <div class="feature-text">
-              <strong>Braking Topik</strong>
-              <span>Ide & diskusi kreatif</span>
-            </div>
-          </div>
-        </div>
+    <!-- Chat Messages Area -->
+    <main class="chat-messages" id="chat-messages">
+      <!-- Welcome card -->
+      <div class="welcome-card" id="welcome-card">
+        <div class="welcome-icon">💖✨</div>
+        <h3>Konichiwa~! 👋</h3>
+        <p>Airi di sini! Kamu siap menemani Airi hari ini kan? Jangan cuekin Airi lho ya! (⁠>⁠<⁠)♡</p>
       </div>
     </main>
 
-    <!-- Footer Input Bar -->
-    <footer class="chat-footer">
-      <form id="chat-form" class="chat-form">
+    <!-- Quick Action Chips -->
+    <div class="quick-chips">
+      <button class="chip" data-text="Konnichiwa Airi-chan! Lagi ngapain nih? ✨">Konnichiwa! 👋</button>
+      <button class="chip" data-text="Kamu kok imut banget sih hari ini? 🥰">Puji Airi 🥰</button>
+      <button class="chip" data-text="Hehe... Airi, kamu lagi cemburu ya? 😜">Usilin Airi 😜</button>
+      <button class="chip" data-text="Boleh minta dimanja nggak hari ini? 🥺👉👈">Minta dimanja 🥺</button>
+    </div>
+
+    <!-- Input Box -->
+    <footer class="chat-input-area">
+      <form id="chat-form" class="input-form">
         <textarea
           id="user-input"
-          placeholder="Ketik pesan Anda..."
+          placeholder="Ketik pesan untuk Airi-chan..."
           rows="1"
           required
         ></textarea>
-        <button type="submit" id="send-btn" class="send-btn" title="Kirim">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        <button type="submit" id="send-btn" title="Kirim Pesan">
+          <span>🚀</span>
         </button>
       </form>
     </footer>

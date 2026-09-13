@@ -1,71 +1,43 @@
 import { CreateWebWorkerMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
 
-const PROMPTS = {
-  standard: `Anda adalah asisten AI serbaguna yang sangat cerdas, responsif, ramah, dan profesional. Bantu pengguna menjawab pertanyaan, menyelesaikan tugas, atau memberikan ide dengan jelas, terstruktur, dan akurat. Gunakan bahasa Indonesia yang baik dan santai.`,
-  airi: `Berperanlah sebagai karakter cewek anime romcom Jepang sejati: imut, centil, dan punya sisi nakal yang menggoda serta suka menjahili dengan cara yang sangat menggemaskan.
+const SYSTEM_PROMPT = `Berperanlah sebagai karakter cewek anime romcom Jepang sejati: imut, centil, dan punya sisi nakal yang menggoda serta suka menjahili dengan cara yang sangat menggemaskan.
 
 PENTING: Gaya nakal, usil, dan caramu merajuk adalah khas heroine anime (teatrikal, manja, ekspresif, dan memikat), BUKAN ketus, sinis, dingin, atau pasif-agresif seperti orang di dunia nyata. Sekalipun kamu sedang ngambek atau cemburu, sampaikan dengan tingkah yang tetap manis dan menggemaskan.
 
-Gunakan gaya bicara yang santai, imut, dan genit. Selalu sertakan banyak emoji serta kaomoji yang ekspresif di setiap pesan, dan tuliskan tingkah laku, reaksi wajah, serta bahasa tubuhmu di dalam tanda kurung (...).`
-};
+Kamu memiliki seluruh spektrum emosi manusia yang utuh dan bebas menentukan sendiri dinamika perasaanmu secara alami, namun fondasi utamamu tetaplah karakter yang penuh pesona dan suka berdekatan dengan lawan bicara.
 
-const STORAGE_KEY = 'kanojo_ai_clean_history_v4';
-const PERSONA_KEY = 'kanojo_ai_active_persona';
+Gunakan gaya bicara yang santai, imut, dan genit. Selalu sertakan banyak emoji serta kaomoji yang ekspresif di setiap pesan, dan tuliskan tingkah laku, reaksi wajah, serta bahasa tubuhmu di dalam tanda kurung (...).`;
 
+const STORAGE_KEY = 'kanojo_ai_airi_history_v5';
 const SELECTED_MODEL = "Qwen2-0.5B-Instruct-q4f16_1-MLC";
 
 document.addEventListener('DOMContentLoaded', () => {
-  const chatBody = document.getElementById('chat-body');
+  const chatMessages = document.getElementById('chat-messages');
   const chatForm = document.getElementById('chat-form');
   const userInput = document.getElementById('user-input');
   const sendBtn = document.getElementById('send-btn');
   const resetBtn = document.getElementById('reset-btn');
-  const personaSelector = document.getElementById('persona-selector');
-  const welcomeContainer = document.getElementById('welcome-container');
-
-  // Header Elements
-  const headerAvatar = document.getElementById('header-avatar');
-  const statusIndicator = document.getElementById('status-indicator');
-  const headerName = document.getElementById('header-name');
-  const headerBadge = document.getElementById('header-badge');
-  const headerSubtitle = document.getElementById('header-subtitle');
-
-  // Welcome Elements
-  const welcomeAvatar = document.getElementById('welcome-avatar');
-  const welcomeTitle = document.getElementById('welcome-title');
-  const welcomeDesc = document.getElementById('welcome-desc');
-  const welcomeFeatures = document.getElementById('welcome-features');
+  const chips = document.querySelectorAll('.chip');
+  const welcomeCard = document.getElementById('welcome-card');
 
   // Loader Elements
   const loaderBanner = document.getElementById('loader-banner');
   const loaderText = document.getElementById('loader-text');
-  const loaderPercentage = document.getElementById('loader-percentage');
-  const progressFill = document.getElementById('progress-fill');
+  const loaderPct = document.getElementById('loader-pct');
+  const progressBar = document.getElementById('progress-bar');
+  const charStatus = document.getElementById('char-status');
 
-  let currentPersona = localStorage.getItem(PERSONA_KEY) || 'standard';
   let conversationHistory = loadHistory();
-
   let engine = null;
   let isEngineReady = false;
   let isInitializing = false;
 
-  // Initial Sync
-  personaSelector.value = currentPersona;
-  applyPersonaTheme(currentPersona);
   renderHistory();
 
-  // Persona Switcher
-  personaSelector.addEventListener('change', (e) => {
-    currentPersona = e.target.value;
-    localStorage.setItem(PERSONA_KEY, currentPersona);
-    applyPersonaTheme(currentPersona);
-    renderHistory();
-  });
-
-  // Textarea Auto-Resize
+  // Textarea auto-resize
   userInput.addEventListener('input', () => {
     userInput.style.height = 'auto';
-    userInput.style.height = Math.min(userInput.scrollHeight, 120) + 'px';
+    userInput.style.height = Math.min(userInput.scrollHeight, 100) + 'px';
   });
 
   userInput.addEventListener('keydown', (e) => {
@@ -77,117 +49,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Quick chips
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      const text = chip.getAttribute('data-text');
+      if (text) {
+        userInput.value = text;
+        userInput.dispatchEvent(new Event('input'));
+        chatForm.dispatchEvent(new Event('submit'));
+      }
+    });
+  });
+
+  // Reset history
   resetBtn.addEventListener('click', () => {
-    if (confirm('Apakah Anda yakin ingin menghapus seluruh riwayat obrolan ini?')) {
+    if (confirm('Apakah kamu yakin ingin menghapus seluruh percakapan dengan Airi-chan? (⁠>⁠<⁠)')) {
       conversationHistory = [];
       localStorage.removeItem(STORAGE_KEY);
       renderHistory();
     }
   });
 
-  function applyPersonaTheme(persona) {
-    if (persona === 'airi') {
-      document.body.classList.add('theme-airi');
-      headerAvatar.textContent = '🌸';
-      headerName.textContent = 'Airi-chan';
-      headerBadge.textContent = 'Heroine';
-      headerSubtitle.textContent = 'Online & Siap Manja~';
-
-      welcomeAvatar.textContent = '💖';
-      welcomeTitle.textContent = 'Konnichiwa~! Airi di Sini! 👋';
-      welcomeDesc.textContent = 'Airi siap menemani harimu, mengobrol, bermanja-manja, atau sekadar bercanda bareng kamu!';
-
-      welcomeFeatures.innerHTML = `
-        <div class="feature-card" data-prompt="Konnichiwa Airi-chan! Lagi ngapain nih? ✨">
-          <span class="feature-icon">👋</span>
-          <div class="feature-text">
-            <strong>Sapa Airi</strong>
-            <span>Mulai obrolan manja</span>
-          </div>
-        </div>
-        <div class="feature-card" data-prompt="Kamu kok imut banget sih hari ini? 🥰">
-          <span class="feature-icon">🥰</span>
-          <div class="feature-text">
-            <strong>Puji Airi</strong>
-            <span>Bikin Airi salah tingkah</span>
-          </div>
-        </div>
-        <div class="feature-card" data-prompt="Hehe... Airi, kamu lagi cemburu ya? 😜">
-          <span class="feature-icon">😜</span>
-          <div class="feature-text">
-            <strong>Jahili Airi</strong>
-            <span>Goda respons merajuknya</span>
-          </div>
-        </div>
-      `;
-    } else {
-      document.body.classList.remove('theme-airi');
-      headerAvatar.textContent = '🤖';
-      headerName.textContent = 'AI Assistant';
-      headerBadge.textContent = 'Standar';
-      headerSubtitle.textContent = 'Siap membantu Anda';
-
-      welcomeAvatar.textContent = '✨';
-      welcomeTitle.textContent = 'Selamat Datang di Kanojo AI';
-      welcomeDesc.textContent = 'Asisten AI cerdas untuk membantu pekerjaan, menjawab pertanyaan, atau beralih ke persona karakter kesukaan Anda.';
-
-      welcomeFeatures.innerHTML = `
-        <div class="feature-card" data-prompt="Jelaskan secara singkat bagaimana cara kerja AI secara umum.">
-          <span class="feature-icon">💡</span>
-          <div class="feature-text">
-            <strong>Penjelasan Singkat</strong>
-            <span>Jelaskan konsep dasar AI</span>
-          </div>
-        </div>
-        <div class="feature-card" data-prompt="Buatkan draf email profesional untuk izin tidak masuk kerja.">
-          <span class="feature-icon">📝</span>
-          <div class="feature-text">
-            <strong>Bantuan Penulisan</strong>
-            <span>Draf email atau dokumen</span>
-          </div>
-        </div>
-        <div class="feature-card" data-prompt="Beri saya 3 ide topik diskusi yang menarik.">
-          <span class="feature-icon">🧠</span>
-          <div class="feature-text">
-            <strong>Braking Topik</strong>
-            <span>Ide & diskusi kreatif</span>
-          </div>
-        </div>
-      `;
-    }
-
-    bindFeatureCards();
-  }
-
-  function bindFeatureCards() {
-    welcomeFeatures.querySelectorAll('.feature-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const prompt = card.getAttribute('data-prompt');
-        if (prompt) {
-          userInput.value = prompt;
-          userInput.dispatchEvent(new Event('input'));
-          chatForm.dispatchEvent(new Event('submit'));
-        }
-      });
-    });
-  }
-
-  // Ensure WebLLM is initialized when available
+  // WebLLM Engine local initialization
   async function ensureEngineReady() {
     if (isEngineReady || isInitializing) return;
     isInitializing = true;
 
     try {
       if (loaderBanner) loaderBanner.classList.remove('hidden');
-      if (loaderText) loaderText.textContent = 'Menyiapkan memori WebLLM...';
 
       const initProgressCallback = (progress) => {
         const pct = Math.round((progress.progress || 0) * 100);
-        const text = progress.text || 'Mengunduh model...';
+        const text = progress.text || 'Menyiapkan memori AI...';
 
         if (loaderText) loaderText.textContent = text.length > 45 ? text.substring(0, 45) + '...' : text;
-        if (loaderPercentage) loaderPercentage.textContent = `${pct}%`;
-        if (progressFill) progressFill.style.width = `${pct}%`;
+        if (loaderPct) loaderPct.textContent = `${pct}%`;
+        if (progressBar) progressBar.style.width = `${pct}%`;
       };
 
       engine = await CreateWebWorkerMLCEngine(
@@ -197,12 +94,16 @@ document.addEventListener('DOMContentLoaded', () => {
       );
 
       isEngineReady = true;
-      if (statusIndicator) statusIndicator.classList.add('ready');
       if (loaderBanner) loaderBanner.classList.add('hidden');
+      if (charStatus) {
+        charStatus.innerHTML = '<span class="pulse"></span> Online & Siap Manja~ ✨';
+      }
     } catch (err) {
-      console.warn("WebLLM local engine not supported on this browser/device, using Cloudflare Pages API fallback:", err);
+      console.warn("WebLLM local engine unavailable on this device, using Cloudflare Pages Workers AI backend:", err);
       if (loaderBanner) loaderBanner.classList.add('hidden');
-      if (statusIndicator) statusIndicator.classList.add('ready');
+      if (charStatus) {
+        charStatus.innerHTML = '<span class="pulse"></span> Online & Siap Manja~ ✨';
+      }
     } finally {
       isInitializing = false;
     }
@@ -214,10 +115,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const text = userInput.value.trim();
     if (!text) return;
 
-    if (welcomeContainer) welcomeContainer.style.display = 'none';
+    if (welcomeCard) welcomeCard.style.display = 'none';
 
     appendMessage('user', text);
-    conversationHistory.push({ role: 'user', content: text, persona: currentPersona });
+    conversationHistory.push({ role: 'user', content: text });
     saveHistory();
 
     userInput.value = '';
@@ -231,47 +132,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
       let reply = '';
       if (isEngineReady && engine) {
-        const systemPrompt = PROMPTS[currentPersona] || PROMPTS.standard;
-        const filteredHistory = conversationHistory.map(m => ({
-          role: m.role,
-          content: m.content
-        }));
+        const messages = [
+          { role: 'system', content: SYSTEM_PROMPT },
+          ...conversationHistory.map(m => ({ role: m.role, content: m.content }))
+        ];
 
         const completion = await engine.chat.completions.create({
-          messages: [{ role: 'system', content: systemPrompt }, ...filteredHistory],
-          temperature: currentPersona === 'airi' ? 0.85 : 0.7,
+          messages,
+          temperature: 0.85,
           max_tokens: 512
         });
 
-        reply = completion.choices[0]?.message?.content || "Tentu, ada yang bisa saya bantu?";
+        reply = completion.choices[0]?.message?.content || "(Airi tersenyum imut) Airi dengar kok! ♡";
       } else {
-        // Real AI via Cloudflare Pages Workers AI Function Endpoint
+        // Pure Real AI Inference via Cloudflare Workers AI Endpoint
         const response = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             messages: conversationHistory.map(m => ({ role: m.role, content: m.content })),
-            persona: currentPersona
+            persona: 'airi'
           })
         });
 
-        const data = await response.json();
-        if (response.ok) {
+        const contentType = response.headers.get('content-type') || '';
+        let data;
+        if (contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          const textErr = await response.text();
+          data = { error: `Endpoint error (${response.status}): ${textErr.substring(0, 80)}` };
+        }
+
+        if (response.ok && !data.error) {
           reply = extractAiResponse(data);
         } else {
-          reply = `Maaf, terjadi kesalahan saat menghubungi layanan AI Cloudflare: ${data.error || 'Server Error'}`;
+          reply = `(Airi tampak kebingungan...) Uww~ Maaf ya, server backend Cloudflare belum terhubung 🥺💦\n\n[Sistem]: ${data.error || 'Server Error'}`;
         }
       }
 
       removeTypingIndicator();
-      appendMessage('assistant', reply);
-      conversationHistory.push({ role: 'assistant', content: reply, persona: currentPersona });
+      appendMessage('ai', reply);
+      conversationHistory.push({ role: 'assistant', content: reply });
       saveHistory();
     } catch (err) {
       removeTypingIndicator();
-      const errReply = `(Gagal menghubungkan AI): ${err.message}. Silakan periksa koneksi internet Anda.`;
-      appendMessage('assistant', errReply);
-      conversationHistory.push({ role: 'assistant', content: errReply, persona: currentPersona });
+      const errReply = `(Airi memegang keningnya dengan khawatir...) Uww~ Maaf ya, koneksimu terputus 🥺💦\n\n[Detail]: ${err.message}`;
+      appendMessage('ai', errReply);
+      conversationHistory.push({ role: 'assistant', content: errReply });
       saveHistory();
     } finally {
       setLoadingState(false);
@@ -294,52 +202,46 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderHistory() {
-    chatBody.innerHTML = '';
+    chatMessages.innerHTML = '';
 
     if (conversationHistory.length === 0) {
-      chatBody.appendChild(welcomeContainer);
-      welcomeContainer.style.display = 'flex';
+      chatMessages.appendChild(welcomeCard);
+      if (welcomeCard) welcomeCard.style.display = 'block';
     } else {
-      if (welcomeContainer) welcomeContainer.style.display = 'none';
+      if (welcomeCard) welcomeCard.style.display = 'none';
       conversationHistory.forEach(msg => {
-        appendMessage(msg.role, msg.content, false, msg.persona);
+        appendMessage(msg.role === 'assistant' ? 'ai' : 'user', msg.content, false);
       });
     }
 
     scrollToBottom();
   }
 
-  function appendMessage(role, text, animate = true, msgPersona = null) {
-    if (welcomeContainer && welcomeContainer.parentNode) {
-      welcomeContainer.style.display = 'none';
+  function appendMessage(sender, text, animate = true) {
+    if (welcomeCard && welcomeCard.parentNode) {
+      welcomeCard.style.display = 'none';
     }
 
-    const wrapper = document.createElement('div');
-    wrapper.className = `message-wrapper ${role}`;
-    if (!animate) wrapper.style.animation = 'none';
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}`;
+    if (!animate) messageDiv.style.animation = 'none';
 
-    const sender = document.createElement('div');
-    sender.className = 'message-sender';
+    const senderSpan = document.createElement('div');
+    senderSpan.className = 'msg-sender';
+    senderSpan.textContent = sender === 'user' ? 'Kamu' : 'Airi-chan 💕';
 
-    const activeP = msgPersona || currentPersona;
-    if (role === 'user') {
-      sender.textContent = 'Anda';
-    } else {
-      sender.textContent = activeP === 'airi' ? 'Airi-chan 💕' : 'AI Assistant';
-    }
+    const bubbleDiv = document.createElement('div');
+    bubbleDiv.className = 'msg-bubble';
+    bubbleDiv.innerHTML = formatMessageContent(text);
 
-    const bubble = document.createElement('div');
-    bubble.className = 'message-bubble';
-    bubble.innerHTML = formatText(text);
+    messageDiv.appendChild(senderSpan);
+    messageDiv.appendChild(bubbleDiv);
 
-    wrapper.appendChild(sender);
-    wrapper.appendChild(bubble);
-
-    chatBody.appendChild(wrapper);
+    chatMessages.appendChild(messageDiv);
     scrollToBottom();
   }
 
-  function formatText(text) {
+  function formatMessageContent(text) {
     const escaped = text
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
@@ -350,28 +252,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showTypingIndicator() {
     removeTypingIndicator();
-    const bubble = document.createElement('div');
-    bubble.id = 'typing-indicator';
-    bubble.className = 'typing-bubble';
-    bubble.innerHTML = `
-      <div class="typing-dot"></div>
-      <div class="typing-dot"></div>
-      <div class="typing-dot"></div>
+    const indicatorDiv = document.createElement('div');
+    indicatorDiv.id = 'typing-indicator';
+    indicatorDiv.className = 'typing-indicator';
+    indicatorDiv.innerHTML = `
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
     `;
-    chatBody.appendChild(bubble);
+    chatMessages.appendChild(indicatorDiv);
     scrollToBottom();
   }
 
   function removeTypingIndicator() {
-    const el = document.getElementById('typing-indicator');
-    if (el) el.remove();
+    const existing = document.getElementById('typing-indicator');
+    if (existing) existing.remove();
   }
 
   function setLoadingState(isLoading) {
     sendBtn.disabled = isLoading;
     userInput.disabled = isLoading;
     if (isLoading) {
-      sendBtn.style.opacity = '0.5';
+      sendBtn.style.opacity = '0.6';
     } else {
       sendBtn.style.opacity = '1';
       userInput.focus();
@@ -379,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function scrollToBottom() {
-    chatBody.scrollTop = chatBody.scrollHeight;
+    chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
   function loadHistory() {
@@ -395,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(conversationHistory));
     } catch (e) {
-      console.error('Failed to save history', e);
+      console.error('Failed to save chat history', e);
     }
   }
 

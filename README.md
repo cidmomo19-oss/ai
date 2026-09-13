@@ -1,44 +1,66 @@
-# 🤖 Kanojo AI - Professional Smart Assistant & Roleplay Persona Chat
+# 🌸 Airi-chan - Anime Romcom Roleplay AI
 
-Aplikasi AI Chat modern, elegan, dan profesional yang mendukung dua mode utama:
-1. **🤖 Mode AI Standar**: Asisten AI cerdas serbaguna untuk membantu tugas, ide, penulisan dokumen, dan diskusi umum.
-2. **🌸 Airi-chan (Anime Romcom Roleplay)**: Persona karakter cewek anime romcom Jepang yang imut, centil, dan suka menjahili dengan cara menggemaskan.
+Aplikasi AI Chat Roleplay dengan karakter heroine anime romcom Jepang yang imut, centil, dan punya sisi nakal yang menggoda serta suka menjahili dengan cara menggemaskan.
 
----
-
-## ✨ Fitur Utama
-- 🎨 **Desain Profesional & Simetris**: Antarmuka responsif mobile-first yang bersih, modern, dan nyaman digunakan.
-- 🔀 **Multi-Persona Switcher**: Bebas beralih antara Asisten AI Standar dan Persona Airi-chan dari menu dropdown di header secara instan.
-- ⚡ **WebLLM In-Browser & Local Fallback Engine**: AI berjalan langsung di browser tanpa memerlukan API Key pihak ketiga.
-- 💬 **Bantuan Cepat (Feature Cards)**: Opsi kartu pertanyaan cepat untuk memulai obrolan dengan 1 klik.
-- 📱 **100% Mobile Ready**: Didesain khusus untuk layar HP & tablet.
+✨ **Keunggulan Utama:**
+- 💖 **Pure Real AI**: Menggunakan teknologi **WebLLM** (Local In-Browser AI) dan hybrid fallback **Cloudflare Workers AI** (`@cf/meta/llama-3.1-8b-instruct`). Tanpa API key pihak ketiga (OpenAI, Gemini, Groq) dan tanpa balasan template palsu!
+- 📱 **Mobile First UI**: Desain antarmuka imut bertema anime romcom yang simetris, cantik, dan responsif di HP.
+- 💬 **Fitur Lengkap**: Memori percakapan otomatis di HP, tombol pesan cepat (*quick chips*), indikator ketik, dan tombol reset riwayat.
 
 ---
 
-## 🚀 Cara Deploy ke Cloudflare Pages (Gratis & Bebas API Key)
+## 📱 Cara Deploy ke Cloudflare Pages dari HP (Khusus Orang Awam)
 
-Dideploy dengan mudah lewat browser HP dalam 2 menit:
+Kamu bisa mendeploy aplikasi ini langsung dari browser HP dalam kurun waktu **2–3 menit**:
 
-1. Buka [github.com](https://github.com) dan fork/simpan repositori ini.
-2. Buka Dashboard Cloudflare: **[dash.cloudflare.com](https://dash.cloudflare.com)**.
-3. Klik **Workers & Pages** -> **Create Application** -> tab **Pages** -> **Connect to Git**.
-4. Pilih repository `kanojo-ai-chat`.
-5. Pengaturan Build:
-   - **Framework preset**: `None`
-   - **Build command**: *(Biarkan kosong)*
-   - **Build output directory**: `public`
+### 📍 Langkah 1: Fork / Upload Repository ke GitHub
+1. Buat akun di [github.com](https://github.com) (jika belum ada).
+2. Simpan/fork repository project ini ke akun GitHub kamu.
+
+---
+
+### 📍 Langkah 2: Deploy ke Cloudflare Pages
+1. Buka Dashboard Cloudflare: **[dash.cloudflare.com](https://dash.cloudflare.com)** di HP.
+2. Klik menu **Workers & Pages** -> **Create Application**.
+3. Pilih tab **Pages**, lalu klik **Connect to Git**.
+4. Hubungkan ke akun GitHub kamu, lalu pilih repository `kanojo-ai-chat`.
+5. Klik **Begin setup**.
+
+#### ⚙️ Pengaturan Build:
+- **Project name**: `kanojo-ai-chat`
+- **Framework preset**: Pilih **None**
+- **Build command**: *(Biarkan kosong)*
+- **Build output directory**: Ketik `public`
 6. Klik **Save and Deploy**.
+
+---
+
+### 📍 Langkah 3: Aktifkan Workers AI Binding (PENTING! ⚠️)
+Agar AI serverless Cloudflare Workers AI aktif sebagai fallback saat browser HP tidak mendukung WebGPU:
+
+1. Di dashboard Cloudflare Pages project kamu, klik tab **Settings** (Pengaturan).
+2. Pilih menu **Functions**.
+3. Cari bagian **Workers AI Bindings**, lalu klik **Add binding**.
+4. Isi data:
+   - **Variable name**: `AI` *(Wajib huruf kapital)*
+5. Klik **Save**.
+6. Masuk ke tab **Deployments**, klik titik tiga (**...**) pada deployment terbaru, lalu pilih **Retry deployment**.
+
+🎉 **SELESAI!** Sekarang buka link website Cloudflare Pages kamu (misal: `https://kanojo-ai-chat.pages.dev`), dan kamu sudah bisa mengobrol santai & bermanja-manja dengan **Airi-chan**! 💖✨
 
 ---
 
 ## 📁 Struktur File Project
 
 ```text
+├── functions/
+│   └── api/
+│       └── chat.js       # Cloudflare Pages Workers AI backend endpoint
 ├── public/
-│   ├── index.html      # Tampilan UI Chat Profesional Multi-Mode
-│   ├── style.css       # Styling Modern & Tema Dynamic Switcher
-│   ├── app.js          # Logika Persona Switcher & Engine Integration
-│   └── worker.js       # Background Web Worker AI Engine
-├── wrangler.toml       # Konfigurasi Cloudflare Pages
-└── README.md           # Dokumen resmi project
+│   ├── index.html      # Tampilan UI Chat Anime (Airi-chan)
+│   ├── style.css       # Styling Mobile & Tema Soft Pink
+│   ├── app.js          # Logika Hybrid WebLLM Engine & Real AI API
+│   └── worker.js       # Web Worker untuk pemrosesan local AI
+├── wrangler.toml       # Konfigurasi Cloudflare Workers AI Binding
+└── README.md           # Panduan lengkap pengguna
 ```
