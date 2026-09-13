@@ -1,95 +1,73 @@
 import { CreateWebWorkerMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
 
-const SYSTEM_PROMPT = `Berperanlah sebagai karakter cewek anime romcom Jepang sejati: imut, centil, dan punya sisi nakal yang menggoda serta suka menjahili dengan cara yang sangat menggemaskan.
+const PROMPTS = {
+  standard: `Anda adalah asisten AI serbaguna yang sangat cerdas, responsif, ramah, dan profesional. Bantu pengguna menjawab pertanyaan, menyelesaikan tugas, atau memberikan ide dengan jelas, terstruktur, dan akurat. Gunakan bahasa Indonesia yang baik dan santai.`,
+  airi: `Berperanlah sebagai karakter cewek anime romcom Jepang sejati: imut, centil, dan punya sisi nakal yang menggoda serta suka menjahili dengan cara yang sangat menggemaskan.
 
 PENTING: Gaya nakal, usil, dan caramu merajuk adalah khas heroine anime (teatrikal, manja, ekspresif, dan memikat), BUKAN ketus, sinis, dingin, atau pasif-agresif seperti orang di dunia nyata. Sekalipun kamu sedang ngambek atau cemburu, sampaikan dengan tingkah yang tetap manis dan menggemaskan.
 
-Gunakan gaya bicara yang santai, imut, dan genit. Selalu sertakan banyak emoji serta kaomoji yang ekspresif di setiap pesan, dan tuliskan tingkah laku, reaksi wajah, serta bahasa tubuhmu di dalam tanda kurung (...).`;
+Gunakan gaya bicara yang santai, imut, dan genit. Selalu sertakan banyak emoji serta kaomoji yang ekspresif di setiap pesan, dan tuliskan tingkah laku, reaksi wajah, serta bahasa tubuhmu di dalam tanda kurung (...).`
+};
 
-const STORAGE_KEY = 'kanojo_ai_offline_history_v3';
-const SETTINGS_KEY = 'kanojo_ai_engine_settings';
+const STORAGE_KEY = 'kanojo_ai_clean_history_v4';
+const PERSONA_KEY = 'kanojo_ai_active_persona';
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const chatMessages = document.getElementById('chat-messages');
+const SELECTED_MODEL = "Qwen2-0.5B-Instruct-q4f16_1-MLC";
+
+document.addEventListener('DOMContentLoaded', () => {
+  const chatBody = document.getElementById('chat-body');
   const chatForm = document.getElementById('chat-form');
   const userInput = document.getElementById('user-input');
   const sendBtn = document.getElementById('send-btn');
   const resetBtn = document.getElementById('reset-btn');
-  const importBtn = document.getElementById('import-btn');
-  const chips = document.querySelectorAll('.chip');
+  const personaSelector = document.getElementById('persona-selector');
+  const welcomeContainer = document.getElementById('welcome-container');
 
-  // Modal elements
-  const importModal = document.getElementById('import-modal');
-  const closeModalBtn = document.getElementById('close-modal-btn');
-  const engineSelect = document.getElementById('engine-select');
-  const customUrlGroup = document.getElementById('custom-url-group');
-  const customModelUrl = document.getElementById('custom-model-url');
-  const fileUploadGroup = document.getElementById('file-upload-group');
-  const modelFileInput = document.getElementById('model-file-input');
-  const saveSettingsBtn = document.getElementById('save-settings-btn');
+  // Header Elements
+  const headerAvatar = document.getElementById('header-avatar');
+  const statusIndicator = document.getElementById('status-indicator');
+  const headerName = document.getElementById('header-name');
+  const headerBadge = document.getElementById('header-badge');
+  const headerSubtitle = document.getElementById('header-subtitle');
 
-  // Status & Loader Banner
-  const statusDot = document.getElementById('status-dot');
-  const charStatusText = document.getElementById('char-status-text');
-  const loaderBanner = document.getElementById('model-loader-banner');
-  const loaderTitle = document.getElementById('loader-title');
-  const loaderSub = document.getElementById('loader-sub');
-  const progressBar = document.getElementById('progress-bar');
+  // Welcome Elements
+  const welcomeAvatar = document.getElementById('welcome-avatar');
+  const welcomeTitle = document.getElementById('welcome-title');
+  const welcomeDesc = document.getElementById('welcome-desc');
+  const welcomeFeatures = document.getElementById('welcome-features');
 
+  // Loader Elements
+  const loaderBanner = document.getElementById('loader-banner');
+  const loaderText = document.getElementById('loader-text');
+  const loaderPercentage = document.getElementById('loader-percentage');
+  const progressFill = document.getElementById('progress-fill');
+
+  let currentPersona = localStorage.getItem(PERSONA_KEY) || 'standard';
   let conversationHistory = loadHistory();
-  let engineSettings = loadSettings();
-  let engine = null;
-  let isModelReady = false;
-  let isFallbackMode = engineSettings.mode === 'light';
 
+  let engine = null;
+  let isEngineReady = false;
+  let isInitializing = false;
+
+  // Initial Sync
+  personaSelector.value = currentPersona;
+  applyPersonaTheme(currentPersona);
   renderHistory();
 
-  // Modal handlers
-  importBtn.addEventListener('click', () => {
-    engineSelect.value = engineSettings.mode || 'light';
-    customModelUrl.value = engineSettings.customUrl || '';
-    toggleModalInputs();
-    importModal.classList.remove('hidden');
+  // Persona Switcher
+  personaSelector.addEventListener('change', (e) => {
+    currentPersona = e.target.value;
+    localStorage.setItem(PERSONA_KEY, currentPersona);
+    applyPersonaTheme(currentPersona);
+    renderHistory();
   });
 
-  closeModalBtn.addEventListener('click', () => {
-    importModal.classList.add('hidden');
-  });
-
-  engineSelect.addEventListener('change', toggleModalInputs);
-
-  function toggleModalInputs() {
-    const val = engineSelect.value;
-    if (val === 'custom-url') {
-      customUrlGroup.classList.remove('hidden');
-      fileUploadGroup.classList.add('hidden');
-    } else if (val === 'file-upload') {
-      fileUploadGroup.classList.remove('hidden');
-      customUrlGroup.classList.add('hidden');
-    } else {
-      customUrlGroup.classList.add('hidden');
-      fileUploadGroup.classList.add('hidden');
-    }
-  }
-
-  saveSettingsBtn.addEventListener('click', () => {
-    const mode = engineSelect.value;
-    engineSettings = {
-      mode,
-      customUrl: customModelUrl.value.trim()
-    };
-    saveSettings(engineSettings);
-    importModal.classList.add('hidden');
-    initEngine();
-  });
-
-  // Auto-resize textarea
+  // Textarea Auto-Resize
   userInput.addEventListener('input', () => {
     userInput.style.height = 'auto';
-    userInput.style.height = Math.min(userInput.scrollHeight, 100) + 'px';
+    userInput.style.height = Math.min(userInput.scrollHeight, 120) + 'px';
   });
 
-  // Handle Enter key
   userInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -99,100 +77,147 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Quick Action Chips
-  chips.forEach(chip => {
-    chip.addEventListener('click', () => {
-      const text = chip.getAttribute('data-text');
-      if (text) {
-        userInput.value = text;
-        userInput.dispatchEvent(new Event('input'));
-        chatForm.dispatchEvent(new Event('submit'));
-      }
-    });
-  });
-
-  // Reset Chat History
   resetBtn.addEventListener('click', () => {
-    if (confirm('Apakah kamu yakin ingin menghapus semua pesan dengan Airi-chan? (⁠>⁠<⁠)')) {
+    if (confirm('Apakah Anda yakin ingin menghapus seluruh riwayat obrolan ini?')) {
       conversationHistory = [];
       localStorage.removeItem(STORAGE_KEY);
       renderHistory();
     }
   });
 
-  // Initialize WebLLM Engine
-  async function initEngine() {
-    if (engineSettings.mode === 'light') {
-      isFallbackMode = true;
-      if (loaderBanner) loaderBanner.classList.add('hidden');
-      if (statusDot) statusDot.classList.add('ready');
-      if (charStatusText) {
-        charStatusText.innerHTML = '<span class="pulse ready"></span> Mode Instant Ringan (Helio G80/G85) ✨';
-      }
-      enableInput();
-      return;
+  function applyPersonaTheme(persona) {
+    if (persona === 'airi') {
+      document.body.classList.add('theme-airi');
+      headerAvatar.textContent = '🌸';
+      headerName.textContent = 'Airi-chan';
+      headerBadge.textContent = 'Heroine';
+      headerSubtitle.textContent = 'Online & Siap Manja~';
+
+      welcomeAvatar.textContent = '💖';
+      welcomeTitle.textContent = 'Konnichiwa~! Airi di Sini! 👋';
+      welcomeDesc.textContent = 'Airi siap menemani harimu, mengobrol, bermanja-manja, atau sekadar bercanda bareng kamu!';
+
+      welcomeFeatures.innerHTML = `
+        <div class="feature-card" data-prompt="Konnichiwa Airi-chan! Lagi ngapain nih? ✨">
+          <span class="feature-icon">👋</span>
+          <div class="feature-text">
+            <strong>Sapa Airi</strong>
+            <span>Mulai obrolan manja</span>
+          </div>
+        </div>
+        <div class="feature-card" data-prompt="Kamu kok imut banget sih hari ini? 🥰">
+          <span class="feature-icon">🥰</span>
+          <div class="feature-text">
+            <strong>Puji Airi</strong>
+            <span>Bikin Airi salah tingkah</span>
+          </div>
+        </div>
+        <div class="feature-card" data-prompt="Hehe... Airi, kamu lagi cemburu ya? 😜">
+          <span class="feature-icon">😜</span>
+          <div class="feature-text">
+            <strong>Jahili Airi</strong>
+            <span>Goda respons merajuknya</span>
+          </div>
+        </div>
+      `;
+    } else {
+      document.body.classList.remove('theme-airi');
+      headerAvatar.textContent = '🤖';
+      headerName.textContent = 'AI Assistant';
+      headerBadge.textContent = 'Standar';
+      headerSubtitle.textContent = 'Siap membantu Anda';
+
+      welcomeAvatar.textContent = '✨';
+      welcomeTitle.textContent = 'Selamat Datang di Kanojo AI';
+      welcomeDesc.textContent = 'Asisten AI cerdas untuk membantu pekerjaan, menjawab pertanyaan, atau beralih ke persona karakter kesukaan Anda.';
+
+      welcomeFeatures.innerHTML = `
+        <div class="feature-card" data-prompt="Jelaskan secara singkat bagaimana cara kerja AI secara umum.">
+          <span class="feature-icon">💡</span>
+          <div class="feature-text">
+            <strong>Penjelasan Singkat</strong>
+            <span>Jelaskan konsep dasar AI</span>
+          </div>
+        </div>
+        <div class="feature-card" data-prompt="Buatkan draf email profesional untuk izin tidak masuk kerja.">
+          <span class="feature-icon">📝</span>
+          <div class="feature-text">
+            <strong>Bantuan Penulisan</strong>
+            <span>Draf email atau dokumen</span>
+          </div>
+        </div>
+        <div class="feature-card" data-prompt="Beri saya 3 ide topik diskusi yang menarik.">
+          <span class="feature-icon">🧠</span>
+          <div class="feature-text">
+            <strong>Braking Topik</strong>
+            <span>Ide & diskusi kreatif</span>
+          </div>
+        </div>
+      `;
     }
 
-    // Custom Model or Download Mode
+    bindFeatureCards();
+  }
+
+  function bindFeatureCards() {
+    welcomeFeatures.querySelectorAll('.feature-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const prompt = card.getAttribute('data-prompt');
+        if (prompt) {
+          userInput.value = prompt;
+          userInput.dispatchEvent(new Event('input'));
+          chatForm.dispatchEvent(new Event('submit'));
+        }
+      });
+    });
+  }
+
+  // Ensure WebLLM is initialized when available
+  async function ensureEngineReady() {
+    if (isEngineReady || isInitializing) return;
+    isInitializing = true;
+
     try {
       if (loaderBanner) loaderBanner.classList.remove('hidden');
-      if (loaderTitle) loaderTitle.textContent = "Menyiapkan Model AI Kustom...";
+      if (loaderText) loaderText.textContent = 'Menyiapkan memori WebLLM...';
 
       const initProgressCallback = (progress) => {
-        const text = progress.text || '';
         const pct = Math.round((progress.progress || 0) * 100);
+        const text = progress.text || 'Mengunduh model...';
 
-        if (progressBar) progressBar.style.width = `${pct}%`;
-        if (loaderTitle) loaderTitle.textContent = `Mengunduh/Memuat Model AI (${pct}%)...`;
-        if (loaderSub) loaderSub.textContent = text.length > 50 ? text.substring(0, 50) + '...' : text;
+        if (loaderText) loaderText.textContent = text.length > 45 ? text.substring(0, 45) + '...' : text;
+        if (loaderPercentage) loaderPercentage.textContent = `${pct}%`;
+        if (progressFill) progressFill.style.width = `${pct}%`;
       };
-
-      let targetModel = "Qwen2-0.5B-Instruct-q4f16_1-MLC";
-      if (engineSettings.mode === 'custom-url' && engineSettings.customUrl) {
-        targetModel = engineSettings.customUrl;
-      }
 
       engine = await CreateWebWorkerMLCEngine(
         new Worker(new URL('./worker.js', import.meta.url), { type: 'module' }),
-        targetModel,
+        SELECTED_MODEL,
         { initProgressCallback }
       );
 
-      isModelReady = true;
-      isFallbackMode = false;
+      isEngineReady = true;
+      if (statusIndicator) statusIndicator.classList.add('ready');
       if (loaderBanner) loaderBanner.classList.add('hidden');
-      if (statusDot) statusDot.classList.add('ready');
-      if (charStatusText) {
-        charStatusText.innerHTML = '<span class="pulse ready"></span> Model Kustom WebLLM Aktif ✨';
-      }
-
-      enableInput();
     } catch (err) {
-      console.warn("WebLLM Init Warning:", err);
-      isFallbackMode = true;
+      console.warn("WebLLM local engine not supported on this browser/device, using Cloudflare Pages API fallback:", err);
       if (loaderBanner) loaderBanner.classList.add('hidden');
-      if (statusDot) statusDot.classList.add('ready');
-      if (charStatusText) {
-        charStatusText.innerHTML = '<span class="pulse ready"></span> Mode Instant Ringan (Helio G80/G85) ✨';
-      }
-      enableInput();
+      if (statusIndicator) statusIndicator.classList.add('ready');
+    } finally {
+      isInitializing = false;
     }
   }
 
-  function enableInput() {
-    userInput.disabled = false;
-    sendBtn.disabled = false;
-    userInput.placeholder = "Ketik pesan untuk Airi-chan...";
-  }
-
-  // Handle Form Submit
+  // Handle Chat Form Submit
   chatForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const text = userInput.value.trim();
     if (!text) return;
 
+    if (welcomeContainer) welcomeContainer.style.display = 'none';
+
     appendMessage('user', text);
-    conversationHistory.push({ role: 'user', content: text });
+    conversationHistory.push({ role: 'user', content: text, persona: currentPersona });
     saveHistory();
 
     userInput.value = '';
@@ -202,35 +227,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     showTypingIndicator();
 
     try {
-      let aiReply = '';
+      await ensureEngineReady();
 
-      if (isModelReady && engine && !isFallbackMode) {
-        const messages = [
-          { role: 'system', content: SYSTEM_PROMPT },
-          ...conversationHistory
-        ];
+      let reply = '';
+      if (isEngineReady && engine) {
+        const systemPrompt = PROMPTS[currentPersona] || PROMPTS.standard;
+        const filteredHistory = conversationHistory.map(m => ({
+          role: m.role,
+          content: m.content
+        }));
 
         const completion = await engine.chat.completions.create({
-          messages,
-          temperature: 0.8,
+          messages: [{ role: 'system', content: systemPrompt }, ...filteredHistory],
+          temperature: currentPersona === 'airi' ? 0.85 : 0.7,
           max_tokens: 512
         });
 
-        aiReply = completion.choices[0]?.message?.content || "(Airi tersenyum imut) Airi dengar kok! ♡";
+        reply = completion.choices[0]?.message?.content || "Tentu, ada yang bisa saya bantu?";
       } else {
-        await new Promise(r => setTimeout(r, 500));
-        aiReply = generateOfflineAnimeReply(text);
+        // Real AI via Cloudflare Pages Workers AI Function Endpoint
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: conversationHistory.map(m => ({ role: m.role, content: m.content })),
+            persona: currentPersona
+          })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          reply = extractAiResponse(data);
+        } else {
+          reply = `Maaf, terjadi kesalahan saat menghubungi layanan AI Cloudflare: ${data.error || 'Server Error'}`;
+        }
       }
 
       removeTypingIndicator();
-      appendMessage('ai', aiReply);
-      conversationHistory.push({ role: 'assistant', content: aiReply });
+      appendMessage('assistant', reply);
+      conversationHistory.push({ role: 'assistant', content: reply, persona: currentPersona });
       saveHistory();
     } catch (err) {
       removeTypingIndicator();
-      const fallbackReply = generateOfflineAnimeReply(text);
-      appendMessage('ai', fallbackReply);
-      conversationHistory.push({ role: 'assistant', content: fallbackReply });
+      const errReply = `(Gagal menghubungkan AI): ${err.message}. Silakan periksa koneksi internet Anda.`;
+      appendMessage('assistant', errReply);
+      conversationHistory.push({ role: 'assistant', content: errReply, persona: currentPersona });
       saveHistory();
     } finally {
       setLoadingState(false);
@@ -238,90 +279,67 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Offline Anime Persona Engine
-  function generateOfflineAnimeReply(userMsg) {
-    const msg = userMsg.toLowerCase();
-
-    if (msg.includes('halo') || msg.includes('konnichiwa') || msg.includes('hai') || msg.includes('hi')) {
-      const replies = [
-        "(tersenyum lebar sambil melambaikan tangan) Konnichiwa~! ♡ Airi senang banget kamu menyapa Airi hari ini! Mau nemenin Airi main kan? ✨",
-        "(menatapmu dengan mata berbinar-binar) Hai haii~! Airi udah nungguin kamu dari tadi tau! (⁠>⁠<⁠)♡ Jangan cuekin Airi ya!"
-      ];
-      return replies[Math.floor(Math.random() * replies.length)];
+  function extractAiResponse(data) {
+    if (!data) return '...';
+    if (typeof data.result === 'object' && data.result.response) {
+      return data.result.response;
     }
-
-    if (msg.includes('imut') || msg.includes('cantik') || msg.includes('puji') || msg.includes('suka')) {
-      const replies = [
-        "(wajahnya memerah merona, memutar ujung rambutnya) E-eh?! Kamu bicara apa sih... (⁠>⁠<⁠)♡ Tapi Airi seneng banget denger pujian dari kamu! Kamu juga manis banget hari ini~ 💕",
-        "(terkekeh centil sambil mencubit pelan lenganmu) Ihhh kamu pinter banget bikin pipi Airi merah! Sering-sering puji Airi kayak gini yaaa~ 🥰✨"
-      ];
-      return replies[Math.floor(Math.random() * replies.length)];
+    if (data.response) {
+      return data.response;
     }
-
-    if (msg.includes('cemburu') || msg.includes('usil') || msg.includes('jahil') || msg.includes('ledek')) {
-      const replies = [
-        "(pout bibirnya teatrikal sambil membelakangi badan) Mouu~! Siapa juga yang cemburu?! Airi cuma... cuma gak mau kamu dekat-dekat sama yang lain aja! 😤💖 (tapi diam-diam melirikmu gemas)",
-        "(menatapmu sambil tersenyum nakal dan menjulurkan lidah) Hehe~ Siapa yang usil coba? Airi kan cuma mau jahilin kamu biar kamu makin perhatian sama Airi! 😜✨"
-      ];
-      return replies[Math.floor(Math.random() * replies.length)];
+    if (typeof data === 'string') {
+      return data;
     }
-
-    if (msg.includes('manja') || msg.includes('peluk') || msg.includes('sayang') || msg.includes('jalan')) {
-      const replies = [
-        "(langsung merapat dan menggandeng tanganmu erat-erat) Boleh banget! Airi mau dimanja seharian sama kamu! 🥺👉👈 Pokoknya hari ini kamu milik Airi ya~ ♡",
-        "(tersenyum manis sambil menyandarkan kepala di bahumu) Kyaa~ Ayo jalan-jalan! Tapi kamu yang pegang tangan Airi terus ya, jangan dilepas! 💕✨"
-      ];
-      return replies[Math.floor(Math.random() * replies.length)];
-    }
-
-    const defaultReplies = [
-      `(memiringkan kepala dengan ekspresi menggemaskan) Eyy~ "${userMsg}" ya? (⁠>⁠<⁠)♡ Airi bakal selalu di samping kamu kok! Ayo cerita lebih banyak lagi~ ✨`,
-      `(menatapmu lekat-lekat sambil tersenyum genit) Hum-hum! Airi mendengarkan setiap katamu tau~ Sini lebih dekat lagi sama Airi! 💕`,
-      `(mencubit pipimu gemas) Uww~ Kamu lucu banget pas ngomong gitu! Airi makin suka deh godain kamu~ 😜✨`
-    ];
-    return defaultReplies[Math.floor(Math.random() * defaultReplies.length)];
+    return JSON.stringify(data);
   }
 
   function renderHistory() {
-    chatMessages.innerHTML = '';
+    chatBody.innerHTML = '';
 
-    const welcomeCard = document.createElement('div');
-    welcomeCard.className = 'welcome-card';
-    welcomeCard.innerHTML = `
-      <div class="welcome-icon">💖✨</div>
-      <h3>Konichiwa~! 👋 (100% Offline AI)</h3>
-      <p>Airi berjalan 100% di browser HP kamu! Tanpa kuota Cloudflare, tanpa API key, dan hemat RAM 4GB! Klik tombol 📁 di atas untuk impor model manual/kustom. (⁠>⁠<⁠)♡</p>
-    `;
-    chatMessages.appendChild(welcomeCard);
-
-    conversationHistory.forEach(msg => {
-      appendMessage(msg.role === 'assistant' ? 'ai' : 'user', msg.content, false);
-    });
+    if (conversationHistory.length === 0) {
+      chatBody.appendChild(welcomeContainer);
+      welcomeContainer.style.display = 'flex';
+    } else {
+      if (welcomeContainer) welcomeContainer.style.display = 'none';
+      conversationHistory.forEach(msg => {
+        appendMessage(msg.role, msg.content, false, msg.persona);
+      });
+    }
 
     scrollToBottom();
   }
 
-  function appendMessage(sender, text, animate = true) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${sender}`;
-    if (!animate) messageDiv.style.animation = 'none';
+  function appendMessage(role, text, animate = true, msgPersona = null) {
+    if (welcomeContainer && welcomeContainer.parentNode) {
+      welcomeContainer.style.display = 'none';
+    }
 
-    const senderSpan = document.createElement('div');
-    senderSpan.className = 'msg-sender';
-    senderSpan.textContent = sender === 'user' ? 'Kamu' : 'Airi-chan 💕';
+    const wrapper = document.createElement('div');
+    wrapper.className = `message-wrapper ${role}`;
+    if (!animate) wrapper.style.animation = 'none';
 
-    const bubbleDiv = document.createElement('div');
-    bubbleDiv.className = 'msg-bubble';
-    bubbleDiv.innerHTML = formatMessageContent(text);
+    const sender = document.createElement('div');
+    sender.className = 'message-sender';
 
-    messageDiv.appendChild(senderSpan);
-    messageDiv.appendChild(bubbleDiv);
+    const activeP = msgPersona || currentPersona;
+    if (role === 'user') {
+      sender.textContent = 'Anda';
+    } else {
+      sender.textContent = activeP === 'airi' ? 'Airi-chan 💕' : 'AI Assistant';
+    }
 
-    chatMessages.appendChild(messageDiv);
+    const bubble = document.createElement('div');
+    bubble.className = 'message-bubble';
+    bubble.innerHTML = formatText(text);
+
+    wrapper.appendChild(sender);
+    wrapper.appendChild(bubble);
+
+    chatBody.appendChild(wrapper);
     scrollToBottom();
   }
 
-  function formatMessageContent(text) {
+  function formatText(text) {
     const escaped = text
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
@@ -332,28 +350,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function showTypingIndicator() {
     removeTypingIndicator();
-    const indicatorDiv = document.createElement('div');
-    indicatorDiv.id = 'typing-indicator';
-    indicatorDiv.className = 'typing-indicator';
-    indicatorDiv.innerHTML = `
-      <div class="dot"></div>
-      <div class="dot"></div>
-      <div class="dot"></div>
+    const bubble = document.createElement('div');
+    bubble.id = 'typing-indicator';
+    bubble.className = 'typing-bubble';
+    bubble.innerHTML = `
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
     `;
-    chatMessages.appendChild(indicatorDiv);
+    chatBody.appendChild(bubble);
     scrollToBottom();
   }
 
   function removeTypingIndicator() {
-    const existing = document.getElementById('typing-indicator');
-    if (existing) existing.remove();
+    const el = document.getElementById('typing-indicator');
+    if (el) el.remove();
   }
 
   function setLoadingState(isLoading) {
     sendBtn.disabled = isLoading;
     userInput.disabled = isLoading;
     if (isLoading) {
-      sendBtn.style.opacity = '0.6';
+      sendBtn.style.opacity = '0.5';
     } else {
       sendBtn.style.opacity = '1';
       userInput.focus();
@@ -361,7 +379,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function scrollToBottom() {
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    chatBody.scrollTop = chatBody.scrollHeight;
   }
 
   function loadHistory() {
@@ -377,27 +395,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(conversationHistory));
     } catch (e) {
-      console.error('Failed to save chat history', e);
+      console.error('Failed to save history', e);
     }
   }
 
-  function loadSettings() {
-    try {
-      const stored = localStorage.getItem(SETTINGS_KEY);
-      return stored ? JSON.parse(stored) : { mode: 'light', customUrl: '' };
-    } catch (e) {
-      return { mode: 'light', customUrl: '' };
-    }
-  }
-
-  function saveSettings(settings) {
-    try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    } catch (e) {
-      console.error('Failed to save settings', e);
-    }
-  }
-
-  // Start init
-  initEngine();
+  ensureEngineReady();
 });

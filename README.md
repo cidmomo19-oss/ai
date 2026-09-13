@@ -1,32 +1,33 @@
-# 🌸 Kanojo AI - Offline Anime Romcom Roleplay Chat (WebLLM / In-Browser AI)
+# 🤖 Kanojo AI - Professional Smart Assistant & Roleplay Persona Chat
 
-Aplikasi AI Chat Roleplay dengan karakter heroine anime romcom Jepang yang imut, centil, dan suka menjahili secara menggemaskan.
-
-✨ **Keunggulan Utama Offline AI:**
-- 📴 **100% OFFLINE & TANPA KUOTA WORKERS**: AI berjalan sepenuhnya langsung di dalam browser HP kamu. **Bebas boros kuota Cloudflare / API key selamanya!**
-- 📁 **Fitur Impor & Mirror Model Manual**: Jika download online bawaan terasa lambat, kamu dapat mengklik tombol **📁** di kanan atas header aplikasi untuk:
-  - Menggunakan **Mode Engine Instant Ringan** (tanpa download, langsung bisa chat, hemat RAM HP 4GB).
-  - Memasukkan **Tautan/URL Mirror Kustom** pilihanmu (misal HuggingFace mirror lokal terdekat).
-  - Mengimpor file model AI lokal dari penyimpanan HP.
-- 📱 **Mobile First UI**: Desain antarmuka imut bertema anime romcom khusus HP.
-- 💬 **Fitur Lengkap**: Memori percakapan otomatis di HP, tombol pesan cepat (*quick chips*), dan hapus riwayat.
+Aplikasi AI Chat modern, elegan, dan profesional yang mendukung dua mode utama:
+1. **🤖 Mode AI Standar**: Asisten AI cerdas serbaguna untuk membantu tugas, ide, penulisan dokumen, dan diskusi umum.
+2. **🌸 Airi-chan (Anime Romcom Roleplay)**: Persona karakter cewek anime romcom Jepang yang imut, centil, dan suka menjahili dengan cara menggemaskan.
 
 ---
 
-## 🚀 Cara Menggunakan & Deploy ke Cloudflare Pages dari HP
+## ✨ Fitur Utama
+- 🎨 **Desain Profesional & Simetris**: Antarmuka responsif mobile-first yang bersih, modern, dan nyaman digunakan.
+- 🔀 **Multi-Persona Switcher**: Bebas beralih antara Asisten AI Standar dan Persona Airi-chan dari menu dropdown di header secara instan.
+- ⚡ **WebLLM In-Browser & Local Fallback Engine**: AI berjalan langsung di browser tanpa memerlukan API Key pihak ketiga.
+- 💬 **Bantuan Cepat (Feature Cards)**: Opsi kartu pertanyaan cepat untuk memulai obrolan dengan 1 klik.
+- 📱 **100% Mobile Ready**: Didesain khusus untuk layar HP & tablet.
 
-Karena AI berjalan 100% di browser HP kamu, kamu hanya perlu mendeploy file web statis ini ke Cloudflare Pages:
+---
 
-### 📍 Langkah Deploy:
-1. Buka [github.com](https://github.com) dan pastikan repo ini ada di akun GitHub milikmu.
-2. Buka Dashboard Cloudflare: **[dash.cloudflare.com](https://dash.cloudflare.com)** di browser HP.
-3. Klik **Workers & Pages** -> **Create Application** -> pilih tab **Pages** -> klik **Connect to Git**.
+## 🚀 Cara Deploy ke Cloudflare Pages (Gratis & Bebas API Key)
+
+Dideploy dengan mudah lewat browser HP dalam 2 menit:
+
+1. Buka [github.com](https://github.com) dan fork/simpan repositori ini.
+2. Buka Dashboard Cloudflare: **[dash.cloudflare.com](https://dash.cloudflare.com)**.
+3. Klik **Workers & Pages** -> **Create Application** -> tab **Pages** -> **Connect to Git**.
 4. Pilih repository `kanojo-ai-chat`.
 5. Pengaturan Build:
-   - **Framework preset**: None
-   - **Build command**: *Biarkan kosong*
-   - **Build output directory**: Ketik `public`
-6. Klik **Save and Deploy**. Selesai!
+   - **Framework preset**: `None`
+   - **Build command**: *(Biarkan kosong)*
+   - **Build output directory**: `public`
+6. Klik **Save and Deploy**.
 
 ---
 
@@ -34,18 +35,10 @@ Karena AI berjalan 100% di browser HP kamu, kamu hanya perlu mendeploy file web 
 
 ```text
 ├── public/
-│   ├── index.html      # Tampilan UI Chat Anime + Dialog Impor Model (📁)
-│   ├── style.css       # Styling Mobile & Modal UI Soft Pink
-│   ├── app.js          # Logika WebLLM Client Engine, Model Switcher & Persona
-│   └── worker.js       # Web Worker pemrosesan AI di background
-├── wrangler.toml       # Konfigurasi Cloudflare Pages Output
-└── README.md           # Panduan lengkap pengguna
+│   ├── index.html      # Tampilan UI Chat Profesional Multi-Mode
+│   ├── style.css       # Styling Modern & Tema Dynamic Switcher
+│   ├── app.js          # Logika Persona Switcher & Engine Integration
+│   └── worker.js       # Background Web Worker AI Engine
+├── wrangler.toml       # Konfigurasi Cloudflare Pages
+└── README.md           # Dokumen resmi project
 ```
-
----
-
-## 💖 Karakter AI (Prompt System)
-Airi-chan diprogram khusus dengan kepribadian:
-- Teatrikal, manja, ekspresif, dan memikat khas heroine anime romcom.
-- Menggunakan bahasa tubuh di dalam kurung `(...)` serta banyak emoji & kaomoji `(⁠>⁠<⁠)♡`.
-- Bebas mengekspresikan spektrum emosi (cemburu, ngambek, usil) dengan gaya yang selalu manis dan tidak pernah dingin.
